@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Greek Trainer</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=zodiak@500,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6f2;--surface:#f9f8f5;--surface2:#f0efeb;--border:#d4d1ca;
+  --text:#28251d;--muted:#7a7974;--primary:#01696f;--primary-h:#0c4e54;
+  --ok:#167347;--err:#b64235;--text-inv:#f9f8f4;--radius:.75rem;--radiusX:1rem;
+  --font:'Satoshi',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--fdisplay:'Zodiak',Georgia,serif;
+}
+[data-theme=dark]{--bg:#171614;--surface:#1c1b19;--surface2:#201f1d;--border:#393836;--text:#cdccca;--muted:#97958f;--primary:#4f98a3;--primary-h:#227f8b;--text-inv:#171614;--ok:#5bc989;--err:#ff7568}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--font);font-size:1rem;line-height:1.6;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1200px;margin:0 auto;padding:1.5rem}
+header{position:sticky;top:0;z-index:5;padding:1rem 0;background:linear-gradient(var(--bg) 78%,rgba(247,246,242,0));backdrop-filter:blur(10px)}
+[data-theme=dark] header{background:linear-gradient(var(--bg) 78%,rgba(23,22,20,0))}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:.55rem}
+.logo svg{width:30px;height:30px;flex:none}
+.navbtns{display:flex;gap:.5rem;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:var(--surface);padding:.65rem 1rem;border-radius:999px;color:var(--text);font-size:.9rem;text-decoration:none}
+.btn:hover{background:var(--surface2)}
+.btn.primary,.btn.active{background:var(--primary);color:var(--text-inv);border-color:transparent}
+.btn.primary:hover,.btn.active:hover{background:var(--primary-h)}
+main{padding:1rem 0 3rem}
+.hero{padding:2.5rem 0 1.5rem}
+.pill{display:inline-block;padding:.2rem .7rem;border-radius:999px;background:rgba(1,105,111,.1);color:var(--primary);font-size:.85rem;margin-bottom:.75rem}
+h1{font-family:var(--fdisplay);font-size:clamp(2.2rem,5vw,4.2rem);line-height:1.05;margin:0 0 .6rem}
+h2{font-family:var(--fdisplay);font-size:clamp(1.45rem,2.5vw,2.05rem);line-height:1.2;margin:0 0 1rem}
+h3{font-family:var(--fdisplay);font-size:1.25rem;line-height:1.25;margin:0 0 .75rem}
+.lead{color:var(--muted);max-width:70ch;margin:0 0 1.5rem}
+section{padding:1.25rem 0}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radiusX);padding:1.25rem;margin-bottom:1rem}
+.lesson-page{display:none}
+.lesson-page.active{display:block}
+.controls{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
+.muted{color:var(--muted)}
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.rule-list{margin:0;padding-left:1.15rem;display:grid;gap:.45rem}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:.65rem .75rem;text-align:left;vertical-align:top}
+tr:last-child td{border-bottom:0}
+th:last-child,td:last-child{border-right:0}
+th{font-weight:700;background:var(--surface2)}
+.greek{font-family:var(--fdisplay);font-size:1.12em}
+.word-list{columns:2;column-gap:2rem;margin:.5rem 0 0;padding-left:1.3rem}
+.word-list li{break-inside:avoid;margin:.15rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radiusX);padding:1rem;display:flex;flex-direction:column;gap:.45rem}
+.card.hidden{display:none}
+.letter-big{font-family:var(--fdisplay);font-size:3.5rem;line-height:1;color:var(--primary)}
+.letter-small{font-size:.75em;color:var(--muted)}
+.card-name{font-weight:700;font-size:1.05rem}
+.card-row{font-size:.9rem;color:var(--muted)}
+.card-word strong{color:var(--text)}
+.card-tip{font-size:.82rem;color:var(--muted);border-top:1px solid var(--border);padding-top:.4rem}
+.speak{align-self:flex-start;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:.85rem;margin-top:.25rem}
+.alpha-pills{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.alpha-pill{padding:.4rem .9rem;border-radius:999px;border:1px solid var(--border);background:var(--surface2);font-family:var(--fdisplay);font-size:1.1rem;transition:background .2s,color .2s,border-color .2s}
+.alpha-pill.active{background:var(--primary);color:var(--text-inv);border-color:transparent}
+.ex-row{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;font-family:var(--fdisplay);font-size:1.35rem;margin:1rem 0;line-height:2}
+.ex-input{width:2.3rem;height:2.3rem;text-align:center;border:2px solid var(--border);border-radius:.45rem;background:var(--surface2);color:var(--text);font-family:var(--fdisplay);font-size:1.25rem;padding:0}
+.ex-input.wide{width:4.4rem;font-family:var(--font);font-size:1rem}
+.ex-input.ok{border-color:var(--ok)}
+.ex-input.err{border-color:var(--err)}
+.exercise-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.75rem;margin:1rem 0}
+.exercise-item{display:flex;align-items:center;gap:.45rem;background:var(--surface2);padding:.75rem 1rem;border-radius:var(--radius);border:1px solid var(--border)}
+.exercise-num{color:var(--muted);font-size:.85rem;min-width:1.5rem}
+.result-text{color:var(--muted);font-size:.9rem}
+.classify-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1rem}
+.drop-row{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.drop-row strong{display:block;margin-bottom:.65rem}
+.choice-bank{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.choice{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:.35rem .75rem}
+.choice.selected{background:var(--primary);color:var(--text-inv);border-color:transparent}
+.choice.ok{outline:2px solid var(--ok)}
+.choice.err{outline:2px solid var(--err)}
+.badge{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;background:var(--surface2);border:1px solid var(--border);padding:.25rem .6rem;margin:.15rem .2rem .15rem 0}
+footer{padding:2rem 0 3rem;color:var(--muted);font-size:.9rem;border-top:1px solid var(--border)}
+@media (max-width:680px){
+  .wrap{padding:1rem}
+  header{position:static}
+  .navbtns{width:100%;overflow:auto;flex-wrap:nowrap;padding-bottom:.25rem}
+  .btn{white-space:nowrap}
+  .word-list{columns:1}
+}
+@media print{
+  header,.controls,.speak,footer{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .lesson-page{display:none!important}
+  .lesson-page.active{display:block!important}
+  #print-cards{display:grid!important;grid-template-columns:repeat(2,1fr);gap:8mm}
+  .print-card{break-inside:avoid;border:2px solid #222;border-radius:10px;padding:12px;background:#fff;color:#000;min-height:80px}
+  .print-letter{font-size:2.5rem;font-family:serif}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M10 48L32 10l22 38" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 34h24" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>
+        Greek Trainer
+      </div>
+      <nav class="navbtns" id="lessonNav" aria-label="Уроки"></nav>
+    </div>
+  </header>
+
+  <main id="app"></main>
+  <footer>Открывай на телефоне в течение дня, слушай буквы и проходи упражнения.</footer>
+</div>
+
+<script>
+const letters = [
+  {upper:'Α',lower:'α',name:'άλφα',ipa:'/a/',approx:'[А]',word:'άνθρωπος',translation:'человек',tip:'Открытый звук а.'},
+  {upper:'Β',lower:'β',name:'βήτα',ipa:'/v/',approx:'[В]',word:'βιβλίο',translation:'книга',tip:'В современном греческом это v, не b.'},
+  {upper:'Γ',lower:'γ',name:'γάμμα',ipa:'/ɣ/, /ʝ/',approx:'как белорусская [Г]; перед е/и — [Й]',word:'γάλα',translation:'молоко',tip:'Глубже русской г; перед ε, ι, η, υ смягчается.'},
+  {upper:'Δ',lower:'δ',name:'δέλτα',ipa:'/ð/',approx:'[Д] межзубный',word:'δρόμος',translation:'дорога',tip:'Язык между зубами, голос включён.'},
+  {upper:'Ε',lower:'ε',name:'έψιλον',ipa:'/e/',approx:'[Э]',word:'Ελλάδα',translation:'Греция',tip:'Короткий чистый э.'},
+  {upper:'Ζ',lower:'ζ',name:'ζήτα',ipa:'/z/',approx:'[З]',word:'ζάχαρη',translation:'сахар',tip:'Звонкий з.'},
+  {upper:'Η',lower:'η',name:'ήτα',ipa:'/i/',approx:'[И]',word:'ήλιος',translation:'солнце',tip:'Современное η звучит как и.'},
+  {upper:'Θ',lower:'θ',name:'θήτα',ipa:'/θ/',approx:'[Θ] как th в think',word:'θέατρο',translation:'театр',tip:'Глухой межзубный звук.'},
+  {upper:'Ι',lower:'ι',name:'ιώτα',ipa:'/i/',approx:'[И]',word:'Ιταλία',translation:'Италия',tip:'Чистый и.'},
+  {upper:'Κ',lower:'κ',name:'κάππα',ipa:'/k/',approx:'[К]',word:'καφές',translation:'кофе',tip:'Твёрдый к.'},
+  {upper:'Λ',lower:'λ',name:'λάμδα',ipa:'/l/',approx:'[Л]',word:'λεμόνι',translation:'лимон',tip:'Чистый л.'},
+  {upper:'Μ',lower:'μ',name:'μι',ipa:'/m/',approx:'[М]',word:'μαμά',translation:'мама',tip:'Обычный м.'},
+  {upper:'Ν',lower:'ν',name:'νι',ipa:'/n/',approx:'[Н]',word:'νερό',translation:'вода',tip:'Обычный н.'},
+  {upper:'Ξ',lower:'ξ',name:'ξι',ipa:'/ks/',approx:'[КС]',word:'ξύλο',translation:'дерево',tip:'Сразу к+с.'},
+  {upper:'Ο',lower:'ο',name:'όμικρον',ipa:'/o/',approx:'[О]',word:'οδός',translation:'улица',tip:'Короткий о.'},
+  {upper:'Π',lower:'π',name:'πι',ipa:'/p/',approx:'[П]',word:'παππούς',translation:'дедушка',tip:'Твёрдый п.'},
+  {upper:'Ρ',lower:'ρ',name:'ρω',ipa:'/r/',approx:'[Р]',word:'ρόδα',translation:'колесо',tip:'Короткий р.'},
+  {upper:'Σ',lower:'σ/ς',name:'σίγμα',ipa:'/s/',approx:'[С]',word:'σαλάτα',translation:'салат',tip:'ς пишется в конце слова.'},
+  {upper:'Τ',lower:'τ',name:'ταυ',ipa:'/t/',approx:'[Т]',word:'τραπέζι',translation:'стол',tip:'Твёрдый т.'},
+  {upper:'Υ',lower:'υ',name:'ύψιλον',ipa:'/i/',approx:'[И]',word:'υγεία',translation:'здоровье',tip:'Звучит как и.'},
+  {upper:'Φ',lower:'φ',name:'φι',ipa:'/f/',approx:'[Ф]',word:'φίλος',translation:'друг',tip:'Обычный ф.'},
+  {upper:'Χ',lower:'χ',name:'χι',ipa:'/x/',approx:'[Х]',word:'χώρα',translation:'страна',tip:'Горловой х.'},
+  {upper:'Ψ',lower:'ψ',name:'ψι',ipa:'/ps/',approx:'[ПС]',word:'ψάρι',translation:'рыба',tip:'Сразу п+с.'},
+  {upper:'Ω',lower:'ω',name:'ωμέγα',ipa:'/o/',approx:'[О]',word:'ώρα',translation:'время',tip:'Звучит как о, как ο.'}
+];
+const alpha = letters.map(letter => letter.lower.split('/')[0]);
+
+const lessons = [
+  {
+    id:'lesson-1',
+    label:'Урок 1',
+    tag:'24 буквы • произношение • аудио • упражнения',
+    title:'Греческий алфавит',
+    lead:'Карточки с произношением, порядковое аудио и интерактивные упражнения из первого урока.',
+    sections:[
+      {type:'alphabetCards'},
+      {type:'alphabetPlayer'},
+      {type:'lesson1Exercises'},
+      {type:'printCards'},
+      {type:'tips'}
+    ]
+  },
+  {
+    id:'lesson-2',
+    label:'Урок 2',
+    tag:'Гласные • ударение • буквосочетания',
+    title:'Гласные звуки',
+    lead:'Гласные звуки в греческом языке можно соотнести с соответствующими русскими звуками.',
+    sections:[
+      {type:'table',title:'Гласные буквы',headers:['буква','название','произношение'],rows:[
+        ['Α α','альфа / άλφα','[А]'],['Ε ε','эпсилон / έψιλον','[Э]'],['Ι ι','йота / ιώτα','[И]'],['Η η','ита / ήτα','[И]'],['Ο ο','омикрон / όμικρον','[О]'],['Υ υ','ипсилон / ύψιλον','[И]'],['Ω ω','омега / ωμέγα','[О]']
+      ]},
+      {type:'text',paragraphs:[
+        'Все три буквы «и» — Ηη, Ιι, Υυ — в современном новогреческом произносятся одинаково. Одинаково произносятся и две буквы «о»: Οο и Ωω.',
+        'Ударение в словах отображается на письме. В буквосочетании из двух гласных ударение ставится на второй букве: αί, εί, οί, αύ, εύ, ού. Если ударение падает на первую букву сочетания, каждая буква читается отдельно.'
+      ]},
+      {type:'table',title:'Буквосочетания гласных',headers:['сочетание','чтение','пример'],rows:[
+        ['αι','[Э]','ναι [НЭ] — да'],['ει','[И]','είμαι [ИМЭ] — я являюсь'],['οι','[И]','οικονομία [ИКОНОМИА] — экономика'],['ου','[У]','ουρανός [УРАНОС] — небо'],['αυ','[АВ] перед звонкими; [АФ] перед глухими','Αύγουστος [АВГУСТОС] — август; αυτοκίνητο [АФТОКИНИТО] — машина'],['ευ','[ЭВ] перед звонкими; [ЭФ] перед глухими','Ευρώπη [ЭВРОПИ] — Европа; ευχαριστώ [ЭФХАРИСТО] — спасибо']
+      ]},
+      {type:'read',title:'2.1. Прочитайте буквы и буквосочетания',items:['υ','ο','αι','ευ','ι','α','ου','οι','αυ','ε','ει','ω','η']},
+      {type:'classify',title:'2.2. Разнесите буквы по соответствующим строкам таблицы',groups:[{label:'[И]',answers:['ι','υ','η']},{label:'[О]',answers:['ω','ο']}],choices:['ι','ω','ο','υ','η']},
+      {type:'readWords',title:'2.3. Прочитайте слова, обращая внимание на произношение гласных',items:['αυτοκίνητο','αστέρι','πολύ','φράουλα','πρόβλημα','αγάπη','εδώ','μαμά','μητέρα','ναί','παρακαλώ','πατέρας','πάω','σελίδα','ποτήρι','σερβιτόρος','τυρί','τώρα','φίλε','πρωί']}
+    ]
+  },
+  {
+    id:'lesson-3',
+    label:'Урок 3',
+    tag:'Согласные • сочетания • чтение слов',
+    title:'Согласные звуки',
+    lead:'Греческие согласные в основном можно соотнести с соответствующими русскими согласными звуками.',
+    sections:[
+      {type:'table',title:'Согласные буквы',headers:['буква','название','произношение'],rows:[
+        ['Β β','вита / βήτα','[В]'],['Γ γ','гамма / γάμμα','как белорусская [Г]; [Й] перед е/и'],['Δ δ','дельта / δέλτα','[Д]'],['Ζ ζ','зита / ζήτα','[З]'],['Θ θ','θита / θήτα','[Θ]'],['Κ κ','каппа / κάππα','[К]'],['Λ λ','лямда / λάμδα','[Л]'],['Μ μ','ми / μι','[М]'],['Ν ν','ни / νι','[Н]'],['Ξ ξ','кси / ξι','[КС]'],['Π π','пи / πι','[П]'],['Ρ ρ','ро / ρω','[Р]'],['Σ σ ς','сигма / σίγμα','[С]'],['Τ τ','тав / ταυ','[Т]'],['Φ φ','фи / φι','[Ф]'],['Χ χ','хи / χι','[Х]'],['Ψ ψ','пси / ψι','[ПС]']
+      ]},
+      {type:'text',paragraphs:['Буква Θ θ произносится как глухой межзубный звук, похожий на английский th в three, theatre.']},
+      {type:'table',title:'Произношение буквосочетаний',headers:['буквосочетание','чтение','пример'],rows:[
+        ['μπ','[Б] в начале слова; [МБ] в середине','μπανάνα [БАНАНА] — банан; λάμπα [ЛАМБА] — лампа'],
+        ['ντ','[Д] в начале слова; [НД] в середине','ντομάτα [ДОМАТА] — помидор; μοντέρνο [МОНДЕРНО] — современный'],
+        ['γκ','[Г] в начале слова; [НГ] в середине','γκολ [ГОЛ] — гол; άγκυρα [АНГИРА] — якорь'],
+        ['τσ','[Ц]','τσίρκο [ЦИРКО] — цирк'],
+        ['τζ','[ДЗ]','τζαζ [ДЗАЗ] — джаз'],
+        ['γγ','[НГ]','αγγούρι [АНГУРИ] — огурец'],
+        ['γχ','[НХ]','σύγχρονος [СИНХРОНОС] — синхронный']
+      ]},
+      {type:'text',paragraphs:[
+        'Двойные согласные ββ, κκ, λλ, μμ, νν, ππ, ρρ, σς, ττ произносятся без удвоения: πρόγραμμα — программа, μέταλλο — металл.',
+        'Если после букв γ, κ, λ, χ, ν следуют звуки [И], [Е], они смягчаются. Если после сигмы σ следуют β, γ, δ, μ, ρ, μπ, ντ, γκ, она читается как [З]. Двоеточие над буквой показывает раздельное чтение: ευρωπαϊκός.'
+      ]},
+      {type:'read',title:'3.1. Прочитайте буквы и буквосочетания',items:['Ψ ψ','Ν ν','Λ λ','γχ','Δ δ','Σ σ ς','Χ χ','ντ','τζ','Ρ ρ','Π π','Ζ ζ','Γ γ','μπ','Κ κ','γγ','γκ','Φ φ','Μ μ','τσ','Ξ ξ','Τ τ','Θ θ']},
+      {type:'readWords',title:'3.2. Потренируйтесь в чтении греческих слов',items:['αδελφός','εγώ','πρωινό','αδελφή','κόρη','ελπίδα','χρήματα','σύσκεψη','φυσικά','ζωή','κλέφτης','πόσο','αμέσως','σκουλαρίκι','μπαμπάς','πως','αυτό','ξέρω','άνευ','εικόνα']},
+      {type:'classify',title:'3.3. Разнесите буквы по соответствующим строкам таблицы',groups:[{label:'гласные',answers:['ω','υ','α','η','ο','ε','ι']},{label:'согласные',answers:['θ','κ','δ','ν','ψ','λ','τ','β','φ','ρ','ξ','χ','σ','γ','ζ','π']}],choices:['θ','ω','κ','δ','ν','υ','ψ','λ','τ','β','φ','α','ρ','ξ','η','χ','σ','ο','γ','ζ','ε','ι','π']}
+    ]
+  },
+  {
+    id:'lesson-4',
+    label:'Урок 4',
+    tag:'Ξ ξ • Ζ ζ • словарь',
+    title:'Буквы Ξ ξ и Ζ ζ',
+    lead:'Буква Ξ ξ передаёт звук [КС], а буква Ζ ζ — звук [З]. Строчные ξ и ζ похожи, поэтому их важно не путать.',
+    sections:[
+      {type:'text',paragraphs:[
+        'Для человека, владеющего русским языком, изучать греческий будет не слишком сложно — главное научиться правильно читать и писать греческие буквы.',
+        'Многие грамматические темы будут понятны интуитивно. На первых уроках иногда используется транскрипция русскими буквами, но дальше она уже не понадобится.'
+      ]},
+      {type:'twoLists',title:'Примеры слов',leftTitle:'С буквой Ξ ξ (кси)',left:['πράξη — поступок; действие; практика','Αλέξανδρος — Александр','Ξένια — Ксения','ξημέρωμα — рассвет','Ξάνθη — Ксанти','ξύπνιος — бодрствующий; неспящий','ξανθός — блондин','έξι — шесть','Ρωξάνη — Роксана','ξάδελφος — двоюродный брат; кузен'],rightTitle:'С буквой Ζ ζ (зита)',right:['ζέστη — тепло; жара','ζαχαροπλαστείο — кондитерская','ζήλια — зависть; ревность','ζελέ — желе','ζεστό — горячее','ζήτηση — спрос','ζάρα — складка; сборка','ζευγάρι — пара; чета','ζωή — жизнь','ζεϊμπέκικο — зейбекико']},
+      {type:'vocab',title:'Размеры / параметры',items:[['ύψος (n)','высота'],['φάρδος (n)','ширина'],['βάθος (n)','глубина'],['βάρος (n)','вес'],['επιφάνεια (f)','площадь'],['μάκρος (n)','длина'],['όγκος (m)','объём']]},
+      {type:'fillWords',title:'4.1. Вставьте пропущенную букву Ξ ξ (кси) и прочитайте слова',answer:'ξ',items:['__ενοδοχείο — гостиница','έ__ω — вне, снаружи','Αλε__άνδρα — Александра','έ__υπνος — умный','__ερός — сухой','__αδέλφη — двоюродная сестра; кузина','__υλόφωνο — ксилофон','__ενάγηση — сопровождение гостей; экскурсия','__ύλο — палка; древесина','__ένος — чужестранец; иностранец; чужой']},
+      {type:'fillWords',title:'4.2. Вставьте пропущенную букву Ζ ζ (зита) и прочитайте слова',answer:'ζ',items:['__άρι — игральная кость','ένα νεαρό __ευγάρι — молодая пара','__υμάρι — тесто','__ωγράφος — художник','__άχαρη — сахар','__ήτω — да здравствует; ура','__έφυρος — лёгкий ветерок; зефир','__ώο — животное','__υγαριά — весы','ένα __ευγάρι κάλτσες — пара носков']},
+      {type:'chooseLetter',title:'4.3. Прочитайте слова. Где какая буква?',items:[['ξαφνικά','ξ'],['ξανά','ξ'],['ζωολογία','ζ'],['ξύστρα','ξ'],['ζερβός','ζ'],['ξεφωνητό','ξ'],['ζωύφιο','ζ'],['ξεναγός','ξ'],['ξερασία','ξ'],['ζακέτα','ζ']]}
+    ]
+  }
+];
+
+const app = document.getElementById('app');
+const nav = document.getElementById('lessonNav');
+let activeLessonId = location.hash?.replace('#','') || 'lesson-1';
+let hintsHidden = false;
+let playing = false;
+let looping = false;
+let alphaTimer = null;
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+}
+function greek(value){ return '<span class="greek">'+escapeHtml(value)+'</span>'; }
+function speak(parts, btn){
+  if(!('speechSynthesis' in window)){ alert('Синтез речи не поддерживается.'); return; }
+  if(btn) btn.textContent='⏸ играет';
+  const voices = window.speechSynthesis.getVoices();
+  const greekVoice = voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith('el')) || null;
+  let index = 0;
+  function next(){
+    if(index >= parts.length){ if(btn) btn.textContent='▶ Слушать'; return; }
+    const utterance = new SpeechSynthesisUtterance(parts[index]);
+    utterance.lang='el-GR'; utterance.rate=.78; utterance.pitch=1; utterance.volume=1;
+    if(greekVoice) utterance.voice = greekVoice;
+    utterance.onend = () => setTimeout(next, index === 1 ? 700 : 150);
+    utterance.onerror = () => { if(btn) btn.textContent='▶ Слушать'; };
+    index++;
+    window.speechSynthesis.speak(utterance);
+  }
+  window.speechSynthesis.cancel();
+  if(voices.length) next();
+  else window.speechSynthesis.addEventListener('voiceschanged', next, {once:true});
+}
+function input(answer, wide = false){
+  return '<input class="ex-input '+(wide ? 'wide' : '')+'" maxlength="'+(wide ? 8 : 2)+'" data-answer="'+escapeHtml(answer.toLowerCase())+'" aria-label="Ответ">';
+}
+function checkInputs(scope, resultId){
+  const inputs = document.querySelectorAll(scope+' .ex-input');
+  let ok = 0;
+  inputs.forEach(item => {
+    const value = item.value.trim().toLowerCase();
+    item.classList.remove('ok','err');
+    if(value === item.dataset.answer){ item.classList.add('ok'); ok++; }
+    else item.classList.add('err');
+  });
+  document.getElementById(resultId).textContent = ok+' из '+inputs.length+' верно';
+}
+function resetInputs(scope, resultId){
+  document.querySelectorAll(scope+' .ex-input').forEach(item => {
+    item.value = '';
+    item.classList.remove('ok','err');
+  });
+  document.getElementById(resultId).textContent = '';
+}
+function sectionId(lessonId, index){ return lessonId+'-section-'+index; }
+function resultId(lessonId, index){ return lessonId+'-result-'+index; }
+function renderTable(section){
+  return '<section><h2>'+escapeHtml(section.title)+'</h2><div class="table-wrap"><table><thead><tr>'+
+    section.headers.map(header => '<th>'+escapeHtml(header)+'</th>').join('')+
+    '</tr></thead><tbody>'+
+    section.rows.map(row => '<tr>'+row.map(cell => '<td>'+greek(cell)+'</td>').join('')+'</tr>').join('')+
+    '</tbody></table></div></section>';
+}
+function renderText(section){
+  return '<section><div class="panel">'+section.paragraphs.map(paragraph => '<p>'+greek(paragraph)+'</p>').join('')+'</div></section>';
+}
+function renderRead(section){
+  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><div class="choice-bank">'+section.items.map(item => '<span class="badge">'+greek(item)+'</span>').join('')+'</div></div></section>';
+}
+function renderReadWords(section){
+  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><ol class="word-list">'+section.items.map(item => '<li>'+greek(item)+'</li>').join('')+'</ol></div></section>';
+}
+function renderTwoLists(section){
+  return '<section><h2>'+escapeHtml(section.title)+'</h2><div class="two-col"><div class="panel"><h3>'+escapeHtml(section.leftTitle)+'</h3><ul class="rule-list">'+section.left.map(item => '<li>'+greek(item)+'</li>').join('')+'</ul></div><div class="panel"><h3>'+escapeHtml(section.rightTitle)+'</h3><ul class="rule-list">'+section.right.map(item => '<li>'+greek(item)+'</li>').join('')+'</ul></div></div></section>';
+}
+function renderVocab(section){
+  return '<section><div class="panel"><h2>'+escapeHtml(section.title)+'</h2><div class="table-wrap"><table><tbody>'+section.items.map(row => '<tr><td>'+greek(row[0])+'</td><td>'+escapeHtml(row[1])+'</td></tr>').join('')+'</tbody></table></div></div></section>';
+}
+function renderClassify(section, lessonId, index){
+  const sid = sectionId(lessonId, index);
+  const rid = resultId(lessonId, index);
+  return '<section id="'+sid+'" class="panel"><h3>'+escapeHtml(section.title)+'</h3>'+
+    '<p class="lead" style="margin-bottom:0">Нажимай на варианты ниже. Повторный клик снимает выбор.</p>'+
+    '<div class="classify-board">'+section.groups.map(group => '<div class="drop-row"><strong>'+escapeHtml(group.label)+'</strong><div class="choice-bank" data-group="'+escapeHtml(group.label)+'">'+section.choices.map(choice => '<button type="button" class="choice" data-answer="'+escapeHtml(group.answers.includes(choice) ? '1' : '0')+'">'+escapeHtml(choice)+'</button>').join('')+'</div></div>').join('')+'</div>'+
+    '<div class="controls"><button type="button" class="btn primary" data-check-classify="'+sid+'" data-result="'+rid+'">✓ Проверить</button><button type="button" class="btn" data-reset-classify="'+sid+'" data-result="'+rid+'">↺ Сбросить</button><span class="result-text" id="'+rid+'"></span></div></section>';
+}
+function renderFillWords(section, lessonId, index){
+  const sid = sectionId(lessonId, index);
+  const rid = resultId(lessonId, index);
+  return '<section id="'+sid+'" class="panel"><h3>'+escapeHtml(section.title)+'</h3><div class="exercise-grid">'+section.items.map((item, itemIndex) => {
+    const parts = item.split('__');
+    const body = parts.map(part => greek(part)).join(input(section.answer));
+    return '<div class="exercise-item"><span class="exercise-num">'+(itemIndex+1)+'.</span><span>'+body+'</span></div>';
+  }).join('')+'</div><div class="controls"><button type="button" class="btn primary" data-check-inputs="#'+sid+'" data-result="'+rid+'">✓ Проверить</button><button type="button" class="btn" data-reset-inputs="#'+sid+'" data-result="'+rid+'">↺ Сбросить</button><span class="result-text" id="'+rid+'"></span></div></section>';
+}
+function renderChooseLetter(section, lessonId, index){
+  const sid = sectionId(lessonId, index);
+  const rid = resultId(lessonId, index);
+  return '<section id="'+sid+'" class="panel"><h3>'+escapeHtml(section.title)+'</h3><div class="exercise-grid">'+section.items.map((item, itemIndex) => '<div class="exercise-item"><span class="exercise-num">'+(itemIndex+1)+'.</span><span class="greek" style="min-width:6rem">'+escapeHtml(item[0])+'</span>'+input(item[1], true)+'</div>').join('')+'</div><div class="controls"><button type="button" class="btn primary" data-check-inputs="#'+sid+'" data-result="'+rid+'">✓ Проверить</button><button type="button" class="btn" data-reset-inputs="#'+sid+'" data-result="'+rid+'">↺ Сбросить</button><span class="result-text" id="'+rid+'"></span></div></section>';
+}
+function renderAlphabetCards(){
+  return '<section id="cards"><h2>Карточки букв</h2><div class="controls" style="margin-bottom:1rem"><input id="search" class="btn" style="min-width:220px;text-align:left" placeholder="Поиск по букве или слову"><button type="button" class="btn" id="shuffleBtn">Перемешать</button><button type="button" class="btn" id="hideHintsBtn">Скрыть подсказки</button></div><div class="grid" id="cardGrid">'+
+    letters.map((letter, index) => '<div class="card" data-card-index="'+index+'"><div><span class="letter-big">'+letter.upper+'</span> <span class="letter-small">'+letter.lower+'</span></div><div class="card-name">'+letter.name+'</div><div class="card-row">'+letter.approx+'</div><div class="card-row">IPA: '+letter.ipa+'</div><div class="card-row card-word">Пример: <strong>'+letter.word+'</strong> — '+letter.translation+'</div><div class="card-tip">'+letter.tip+'</div><button type="button" class="speak" data-speak-letter="'+index+'">▶ Слушать</button></div>').join('')+
+    '</div></section>';
+}
+function renderAlphabetPlayer(){
+  return '<section id="alpha-player"><h2>Алфавит по порядку</h2><p class="lead">Нажми «Воспроизвести» — все 24 буквы прозвучат по очереди. Текущая буква подсвечивается.</p><div class="panel"><div class="controls" style="margin-top:0"><button type="button" class="btn primary" id="playAll">▶ Воспроизвести алфавит</button><button type="button" class="btn" id="loopBtn">🔁 Зациклить: выкл</button><button type="button" class="btn" id="stopBtn">⏹ Стоп</button><span id="alphaStatus" class="result-text"></span></div><div class="alpha-pills" id="alphaPills">'+letters.map((letter, index) => '<div class="alpha-pill" id="pill-'+index+'">'+letter.upper+' '+letter.lower+'</div>').join('')+'</div></div></section>';
+}
+function renderLesson1Exercises(){
+  const ex1Missing = [3,10,14,18];
+  const ex1 = alpha.map((letter, index) => ex1Missing.includes(index) ? input(letter) : '<span>'+letter+'</span>').join(' ');
+  const chains = [['ζ','η',null],['χ',null,'ω'],[null,'η','θ'],[null,'μ','ν'],['σ','τ',null],['ν',null,'ο'],['φ',null,'ψ'],['δ','ε',null],[null,'κ','λ'],['ρ',null,'τ']];
+  function chainAnswer(chain){
+    const index = chain.indexOf(null);
+    if(index === 0) return alpha[alpha.indexOf(chain[1])-1];
+    if(index === 1) return alpha[alpha.indexOf(chain[0])+1];
+    return alpha[alpha.indexOf(chain[1])+1];
+  }
+  const chainHtml = chains.map((chain, chainIndex) => '<div class="exercise-item"><span class="exercise-num">'+(chainIndex+1)+'.</span>'+chain.map(part => part === null ? input(chainAnswer(chain)) : '<span class="greek">'+part+'</span>').join('<span class="muted">—</span>')+'</div>').join('');
+  const names = letters.map(letter => ({letter:letter.lower.split('/')[0], name:letter.name}));
+  return '<section id="exercises"><h2>Упражнения</h2>'+
+    '<div id="l1-ex1" class="panel"><h3>Упражнение 1 — Вставь пропущенные буквы</h3><p class="lead" style="margin-bottom:0">Алфавит идёт по порядку, но 4 буквы пропущены.</p><div class="ex-row">'+ex1+'</div><div class="controls"><button type="button" class="btn primary" data-check-inputs="#l1-ex1" data-result="l1-r1">✓ Проверить</button><button type="button" class="btn" data-reset-inputs="#l1-ex1" data-result="l1-r1">↺ Сбросить</button><span class="result-text" id="l1-r1"></span></div></div>'+
+    '<div id="l1-ex2" class="panel"><h3>Упражнение 2 — Цепочки</h3><p class="lead" style="margin-bottom:0">Три буквы идут подряд в алфавите. Одна пропущена.</p><div class="exercise-grid">'+chainHtml+'</div><div class="controls"><button type="button" class="btn primary" data-check-inputs="#l1-ex2" data-result="l1-r2">✓ Проверить</button><button type="button" class="btn" data-reset-inputs="#l1-ex2" data-result="l1-r2">↺ Сбросить</button><span class="result-text" id="l1-r2"></span></div></div>'+
+    '<div id="l1-ex3" class="panel"><h3>Упражнение 3 — Название буквы → буква</h3><p class="lead" style="margin-bottom:0">Слева греческое название буквы, справа — впиши строчную букву.</p><div class="exercise-grid">'+names.map(item => '<div class="exercise-item"><span style="min-width:5.7rem">'+item.name+'</span><span class="muted">/</span>'+input(item.letter)+'</div>').join('')+'</div><div class="controls"><button type="button" class="btn primary" data-check-inputs="#l1-ex3" data-result="l1-r3">✓ Проверить</button><button type="button" class="btn" data-reset-inputs="#l1-ex3" data-result="l1-r3">↺ Сбросить</button><span class="result-text" id="l1-r3"></span></div></div>'+
+    '</section>';
+}
+function renderPrintCards(){
+  return '<section id="print-section"><h2>Печатные карточки</h2><p class="lead">Нажми кнопку — откроется диалог печати. Карточки отформатированы под лист A4.</p><div class="controls" style="margin-top:0;margin-bottom:1rem"><button type="button" class="btn primary" onclick="window.print()">🖨 Распечатать карточки</button></div><div id="print-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem">'+letters.map(letter => '<div class="print-card card"><div class="print-letter">'+letter.upper+' '+letter.lower+'</div><div><strong>'+letter.name+'</strong></div><div class="card-row">'+letter.approx+'</div><div class="card-row">'+letter.word+' — '+letter.translation+'</div></div>').join('')+'</div></section>';
+}
+function renderTips(){
+  return '<section><h2>Сложные звуки</h2><div class="panel"><ul class="rule-list"><li><strong>Γ γ:</strong> не русское «г» — звук рождается в горле; перед ε, ι, η, υ смягчается.</li><li><strong>Δ δ:</strong> звонкий межзубный — как th в английском <em>this</em>.</li><li><strong>Θ θ:</strong> глухой межзубный — как th в <em>think</em>.</li><li><strong>Χ χ:</strong> горловой х — как ch в немецком <em>Bach</em>.</li><li><strong>Ξ ξ:</strong> всегда кс — как в слове «такси».</li><li><strong>Ψ ψ:</strong> всегда пс — как в слове «псих».</li></ul></div></section>';
+}
+function renderSection(section, lessonId, index){
+  if(section.type === 'alphabetCards') return renderAlphabetCards();
+  if(section.type === 'alphabetPlayer') return renderAlphabetPlayer();
+  if(section.type === 'lesson1Exercises') return renderLesson1Exercises();
+  if(section.type === 'printCards') return renderPrintCards();
+  if(section.type === 'tips') return renderTips();
+  if(section.type === 'table') return renderTable(section);
+  if(section.type === 'text') return renderText(section);
+  if(section.type === 'read') return renderRead(section);
+  if(section.type === 'readWords') return renderReadWords(section);
+  if(section.type === 'classify') return renderClassify(section, lessonId, index);
+  if(section.type === 'twoLists') return renderTwoLists(section);
+  if(section.type === 'vocab') return renderVocab(section);
+  if(section.type === 'fillWords') return renderFillWords(section, lessonId, index);
+  if(section.type === 'chooseLetter') return renderChooseLetter(section, lessonId, index);
+  return '';
+}
+function renderLessons(){
+  app.innerHTML = lessons.map(lesson => '<article id="'+lesson.id+'" class="lesson-page">'+
+    '<div class="hero"><span class="pill">'+escapeHtml(lesson.tag)+'</span><h1>'+escapeHtml(lesson.title)+'</h1><p class="lead">'+escapeHtml(lesson.lead)+'</p></div>'+
+    lesson.sections.map((section, index) => renderSection(section, lesson.id, index)).join('')+
+    '</article>').join('');
+}
+function renderNav(){
+  nav.innerHTML = lessons.map(lesson => '<button type="button" class="btn" data-lesson="'+lesson.id+'">'+lesson.label+'</button>').join('')+
+    '<button type="button" class="btn" data-theme-toggle>◐</button>';
+}
+function showLesson(id){
+  activeLessonId = lessons.some(lesson => lesson.id === id) ? id : 'lesson-1';
+  document.querySelectorAll('.lesson-page').forEach(page => page.classList.toggle('active', page.id === activeLessonId));
+  document.querySelectorAll('[data-lesson]').forEach(btn => btn.classList.toggle('active', btn.dataset.lesson === activeLessonId));
+  history.replaceState(null, '', '#'+activeLessonId);
+  window.speechSynthesis?.cancel();
+  playing = false;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function highlightPill(index){
+  document.querySelectorAll('.alpha-pill').forEach((pill, pillIndex) => pill.classList.toggle('active', pillIndex === index));
+}
+function playFrom(index){
+  if(!playing || index >= letters.length){
+    if(looping && playing){ playFrom(0); return; }
+    highlightPill(-1);
+    const status = document.getElementById('alphaStatus');
+    if(status) status.textContent = index >= letters.length ? 'Готово!' : '';
+    playing = false;
+    return;
+  }
+  const letter = letters[index];
+  const status = document.getElementById('alphaStatus');
+  if(status) status.textContent = letter.upper+' '+letter.lower+' — '+letter.name;
+  highlightPill(index);
+  speak([letter.name], null);
+  alphaTimer = setTimeout(() => playFrom(index + 1), 1250);
+}
+function bindEvents(){
+  nav.addEventListener('click', event => {
+    const lessonBtn = event.target.closest('[data-lesson]');
+    if(lessonBtn) showLesson(lessonBtn.dataset.lesson);
+  });
+  document.addEventListener('click', event => {
+    const themeBtn = event.target.closest('[data-theme-toggle]');
+    if(themeBtn){
+      const root = document.documentElement;
+      root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+    const speakBtn = event.target.closest('[data-speak-letter]');
+    if(speakBtn){
+      const letter = letters[Number(speakBtn.dataset.speakLetter)];
+      speak([letter.name, letter.word], speakBtn);
+    }
+    const checkBtn = event.target.closest('[data-check-inputs]');
+    if(checkBtn) checkInputs(checkBtn.dataset.checkInputs, checkBtn.dataset.result);
+    const resetBtn = event.target.closest('[data-reset-inputs]');
+    if(resetBtn) resetInputs(resetBtn.dataset.resetInputs, resetBtn.dataset.result);
+    const choiceBtn = event.target.closest('.choice');
+    if(choiceBtn) choiceBtn.classList.toggle('selected');
+    const classifyCheck = event.target.closest('[data-check-classify]');
+    if(classifyCheck){
+      const scope = document.getElementById(classifyCheck.dataset.checkClassify);
+      const selected = scope.querySelectorAll('.choice.selected');
+      let ok = 0;
+      selected.forEach(choice => {
+        choice.classList.remove('ok','err');
+        if(choice.dataset.answer === '1'){ choice.classList.add('ok'); ok++; }
+        else choice.classList.add('err');
+      });
+      const total = scope.querySelectorAll('.choice[data-answer="1"]').length;
+      document.getElementById(classifyCheck.dataset.result).textContent = ok+' из '+total+' верно выбрано';
+    }
+    const classifyReset = event.target.closest('[data-reset-classify]');
+    if(classifyReset){
+      const scope = document.getElementById(classifyReset.dataset.resetClassify);
+      scope.querySelectorAll('.choice').forEach(choice => choice.classList.remove('selected','ok','err'));
+      document.getElementById(classifyReset.dataset.result).textContent = '';
+    }
+    if(event.target.id === 'shuffleBtn'){
+      const grid = document.getElementById('cardGrid');
+      const cards = [...grid.querySelectorAll('.card')];
+      for(let index = cards.length - 1; index > 0; index--){
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [cards[index], cards[swapIndex]] = [cards[swapIndex], cards[index]];
+      }
+      cards.forEach(card => grid.appendChild(card));
+    }
+    if(event.target.id === 'hideHintsBtn'){
+      hintsHidden = !hintsHidden;
+      document.querySelectorAll('.card-row,.card-tip,.card-word').forEach(item => item.style.visibility = hintsHidden ? 'hidden' : 'visible');
+      event.target.textContent = hintsHidden ? 'Показать подсказки' : 'Скрыть подсказки';
+    }
+    if(event.target.id === 'playAll'){
+      if(alphaTimer) clearTimeout(alphaTimer);
+      window.speechSynthesis?.cancel();
+      playing = true;
+      playFrom(0);
+    }
+    if(event.target.id === 'loopBtn'){
+      looping = !looping;
+      event.target.textContent = looping ? '🔁 Зациклить: вкл' : '🔁 Зациклить: выкл';
+      event.target.classList.toggle('active', looping);
+    }
+    if(event.target.id === 'stopBtn'){
+      playing = false;
+      looping = false;
+      if(alphaTimer) clearTimeout(alphaTimer);
+      window.speechSynthesis?.cancel();
+      highlightPill(-1);
+      const loopBtn = document.getElementById('loopBtn');
+      const status = document.getElementById('alphaStatus');
+      if(loopBtn){ loopBtn.textContent = '🔁 Зациклить: выкл'; loopBtn.classList.remove('active'); }
+      if(status) status.textContent = 'Остановлено';
+    }
+  });
+  document.addEventListener('input', event => {
+    if(event.target.id === 'search'){
+      const query = event.target.value.toLowerCase();
+      document.querySelectorAll('#cardGrid .card').forEach(card => card.classList.toggle('hidden', query && !card.textContent.toLowerCase().includes(query)));
+    }
+  });
+}
+function initTheme(){
+  const preferred = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', preferred);
+}
+
+initTheme();
+renderNav();
+renderLessons();
+bindEvents();
+showLesson(activeLessonId);
+</script>
+</body>
+</html>
