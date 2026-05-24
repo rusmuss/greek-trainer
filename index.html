@@ -97,6 +97,7 @@ th{font-weight:700;background:var(--surface2)}
 .quiz-question-row{display:flex;gap:.55rem;align-items:flex-start}
 .quiz-question{font-family:var(--fdisplay);font-size:1.18rem;line-height:1.45;margin:0 0 .55rem}
 .quiz-translation{color:var(--muted);margin:.35rem 0 .8rem}
+.quiz-translation[hidden]{display:none}
 .quiz-answers{display:grid;gap:.55rem;margin-top:.75rem}
 .quiz-answer{display:flex;gap:.55rem;align-items:flex-start;text-align:left;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--radius);padding:.7rem .85rem}
 .quiz-answer:hover{background:var(--surface)}
@@ -106,6 +107,9 @@ th{font-weight:700;background:var(--surface2)}
 .quiz-result{font-weight:700}
 .quiz-image{max-width:100%;border-radius:var(--radius);border:1px solid var(--border);margin:.75rem 0}
 .quiz-answer .mini-speak,.quiz-question-row .mini-speak{flex:none;margin-top:.1rem}
+.quiz-answer-text{flex:1;display:grid;gap:.25rem}
+.quiz-answer-translation{color:var(--muted);font-size:.9rem}
+.quiz-answer-translation[hidden]{display:none}
 footer{padding:2rem 0 3rem;color:var(--muted);font-size:.9rem;border-top:1px solid var(--border)}
 @media (max-width:680px){
   .wrap{padding:1rem}
@@ -286,6 +290,49 @@ function speechText(value){
 }
 function audioButton(value, label = '🔊'){
   return '<button type="button" class="mini-speak" data-speak-text="'+escapeHtml(speechText(value))+'" title="Прослушать">'+label+'</button>';
+}
+function translationButton(targetId, label = 'Показать русский перевод'){
+  return '<button type="button" class="mini-speak" data-toggle-translation="'+escapeHtml(targetId)+'">'+escapeHtml(label)+'</button>';
+}
+function translateAnswer(value){
+  const text = String(value).trim();
+  const dictionary = {
+    'σωστό':'правильно',
+    'λάθος':'неправильно',
+    'Άνοιξη':'весна',
+    'Καλοκαίρι':'лето',
+    'Φθινόπωρο':'осень',
+    'Χειμώνας':'зима',
+    'Χειμώνα':'зимой',
+    'Πάφος':'Пафос',
+    'Λάρνακα':'Ларнака',
+    'Λεμεσός':'Лимасол',
+    'Λευκωσία':'Никосия',
+    'Αμμόχωστος':'Фамагуста',
+    'Κερύνεια':'Кирения',
+    'Επαρχία Λευκωσίας':'район Никосии',
+    'Επαρχία Λάρνακας':'район Ларнаки',
+    'Επαρχία Λεμεσού':'район Лимасола',
+    'Επαρχία Πάφου':'район Пафоса',
+    'Επαρχία Αμμοχώστου':'район Фамагусты',
+    'στην επαρχία Λευκωσίας':'в районе Никосии',
+    'στην επαρχία Λάρνακας':'в районе Ларнаки',
+    'στην επαρχία Λεμεσού':'в районе Лимасола',
+    'στην επαρχία Πάφου':'в районе Пафоса',
+    'στην επαρχία Αμμοχώστου':'в районе Фамагусты',
+    'πατάτες':'картофель',
+    'Υφυπουργού Πολιτισμού':'заместителя министра культуры',
+    'Υφυπουργού Τουρισμού':'заместителя министра туризма'
+  };
+  if(dictionary[text]) return dictionary[text];
+  if(/^[Α-ΩА-ЯA-Z]$/.test(text)) return 'вариант '+text;
+  if(/^\d+([,.]\d+)?%$/.test(text)) return text;
+  if(/^\d+$/.test(text)) return text;
+  const years = text.match(/^(\d+)\s+χρόνια$/);
+  if(years) return years[1]+' лет';
+  const fine = text.match(/^(\d+)\s+ευρώ πρόστιμο$/);
+  if(fine) return 'штраф '+fine[1]+' евро';
+  return 'перевода нет';
 }
 function speak(parts, btn){
   if(!('speechSynthesis' in window)){ alert('Синтез речи не поддерживается.'); return; }
@@ -499,10 +546,14 @@ function startCultureQuiz(){
   const quiz = document.getElementById('cultureQuiz');
   quiz.innerHTML = currentQuiz.map((question, questionIndex) => {
     const image = question.image ? '<img class="quiz-image" src="'+escapeHtml(question.image)+'" alt="Изображение к вопросу" loading="lazy">' : '';
+    const questionTranslationId = 'question-translation-'+questionIndex;
     return '<div class="quiz-card" data-question-index="'+questionIndex+'">'+
-      '<div class="quiz-head"><div><div class="quiz-question-row">'+audioButton(question.text)+'<p class="quiz-question">'+escapeHtml(question.text)+'</p></div>'+(question.translation ? '<p class="quiz-translation">'+escapeHtml(question.translation)+'</p>' : '')+'</div><span class="quiz-qnum">#'+(questionIndex+1)+'</span></div>'+
+      '<div class="quiz-head"><div><div class="quiz-question-row">'+audioButton(question.text)+'<p class="quiz-question">'+escapeHtml(question.text)+'</p></div>'+(question.translation ? translationButton(questionTranslationId)+'<p class="quiz-translation" id="'+questionTranslationId+'" hidden>'+escapeHtml(question.translation)+'</p>' : '')+'</div><span class="quiz-qnum">#'+(questionIndex+1)+'</span></div>'+
       image+
-      '<div class="quiz-answers">'+question.answers.map((answer, answerIndex) => '<button type="button" class="quiz-answer" data-answer-index="'+answerIndex+'">'+audioButton(answer.text)+'<span>'+String.fromCharCode(65 + answerIndex)+'.</span><span>'+escapeHtml(answer.text)+'</span></button>').join('')+'</div>'+
+      '<div class="quiz-answers">'+question.answers.map((answer, answerIndex) => {
+        const answerTranslationId = 'answer-translation-'+questionIndex+'-'+answerIndex;
+        return '<div class="quiz-answer" data-answer-index="'+answerIndex+'" role="button" tabindex="0">'+audioButton(answer.text)+'<span>'+String.fromCharCode(65 + answerIndex)+'.</span><span class="quiz-answer-text"><span>'+escapeHtml(answer.text)+'</span><span>'+translationButton(answerTranslationId, 'Перевод')+'</span><span class="quiz-answer-translation" id="'+answerTranslationId+'" hidden>'+escapeHtml(translateAnswer(answer.text))+'</span></span></div>';
+      }).join('')+'</div>'+
     '</div>';
   }).join('');
   if(checkBtn) checkBtn.disabled = false;
@@ -576,6 +627,18 @@ function bindEvents(){
       event.preventDefault();
       event.stopPropagation();
       speak([speakTextBtn.dataset.speakText], speakTextBtn);
+      return;
+    }
+    const translateBtn = event.target.closest('[data-toggle-translation]');
+    if(translateBtn){
+      event.preventDefault();
+      event.stopPropagation();
+      const target = document.getElementById(translateBtn.dataset.toggleTranslation);
+      if(target){
+        const isHidden = target.hidden;
+        target.hidden = !isHidden;
+        translateBtn.textContent = isHidden ? 'Скрыть перевод' : (translateBtn.dataset.toggleTranslation.startsWith('answer-') ? 'Перевод' : 'Показать русский перевод');
+      }
       return;
     }
     const checkBtn = event.target.closest('[data-check-inputs]');
