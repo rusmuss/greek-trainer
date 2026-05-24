@@ -94,6 +94,7 @@ th{font-weight:700;background:var(--surface2)}
 .quiz-card.wrong{border-color:var(--err)}
 .quiz-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:.75rem}
 .quiz-qnum{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.quiz-question-row{display:flex;gap:.55rem;align-items:flex-start}
 .quiz-question{font-family:var(--fdisplay);font-size:1.18rem;line-height:1.45;margin:0 0 .55rem}
 .quiz-translation{color:var(--muted);margin:.35rem 0 .8rem}
 .quiz-answers{display:grid;gap:.55rem;margin-top:.75rem}
@@ -104,6 +105,7 @@ th{font-weight:700;background:var(--surface2)}
 .quiz-answer.wrong{border-color:var(--err);background:color-mix(in srgb,var(--err) 12%,var(--surface2))}
 .quiz-result{font-weight:700}
 .quiz-image{max-width:100%;border-radius:var(--radius);border:1px solid var(--border);margin:.75rem 0}
+.quiz-answer .mini-speak,.quiz-question-row .mini-speak{flex:none;margin-top:.1rem}
 footer{padding:2rem 0 3rem;color:var(--muted);font-size:.9rem;border-top:1px solid var(--border)}
 @media (max-width:680px){
   .wrap{padding:1rem}
@@ -430,7 +432,7 @@ function renderLessons(){
     '</article>').join('')+
     '<article id="culture-tests" class="lesson-page">'+
       '<div class="hero"><span class="pill">случайные 25 вопросов • самопроверка</span><h1>Тесты по культуре</h1><p class="lead">Тренировка по вопросам на знание культуры: приложение выдаёт случайные 25 вопросов, перемешивает ответы и показывает результат.</p></div>'+
-      '<section class="panel"><h2>Тренировка</h2><p class="lead">Нажми «Новый тест», выбери ответы и проверь результат. Вопросы берутся из файла <code>all_questions.json</code>.</p><div class="quiz-toolbar"><button type="button" class="btn primary" id="newCultureQuiz">🎲 Новый тест на 25 вопросов</button><button type="button" class="btn" id="checkCultureQuiz" disabled>✓ Проверить тест</button><span class="result-text" id="cultureQuizStatus">Загружаю вопросы…</span></div><div id="cultureQuiz" class="quiz-list"></div></section>'+
+      '<section class="panel"><h2>Тренировка</h2><p class="lead">Нажми «Новый тест» и выбирай ответы: правильный вариант подсветится сразу. Вопросы берутся из файла <code>all_questions.json</code>.</p><div class="quiz-toolbar"><button type="button" class="btn primary" id="newCultureQuiz">🎲 Новый тест на 25 вопросов</button><button type="button" class="btn" id="checkCultureQuiz" disabled>✓ Итог</button><span class="result-text" id="cultureQuizStatus">Загружаю вопросы…</span></div><div id="cultureQuiz" class="quiz-list"></div></section>'+
     '</article>';
 }
 function renderNav(){
@@ -498,13 +500,26 @@ function startCultureQuiz(){
   quiz.innerHTML = currentQuiz.map((question, questionIndex) => {
     const image = question.image ? '<img class="quiz-image" src="'+escapeHtml(question.image)+'" alt="Изображение к вопросу" loading="lazy">' : '';
     return '<div class="quiz-card" data-question-index="'+questionIndex+'">'+
-      '<div class="quiz-head"><div><p class="quiz-question">'+escapeHtml(question.text)+'</p>'+(question.translation ? '<p class="quiz-translation">'+escapeHtml(question.translation)+'</p>' : '')+'</div><span class="quiz-qnum">#'+(questionIndex+1)+'</span></div>'+
+      '<div class="quiz-head"><div><div class="quiz-question-row">'+audioButton(question.text)+'<p class="quiz-question">'+escapeHtml(question.text)+'</p></div>'+(question.translation ? '<p class="quiz-translation">'+escapeHtml(question.translation)+'</p>' : '')+'</div><span class="quiz-qnum">#'+(questionIndex+1)+'</span></div>'+
       image+
-      '<div class="quiz-answers">'+question.answers.map((answer, answerIndex) => '<button type="button" class="quiz-answer" data-answer-index="'+answerIndex+'"><span>'+String.fromCharCode(65 + answerIndex)+'.</span><span>'+escapeHtml(answer.text)+'</span></button>').join('')+'</div>'+
+      '<div class="quiz-answers">'+question.answers.map((answer, answerIndex) => '<button type="button" class="quiz-answer" data-answer-index="'+answerIndex+'">'+audioButton(answer.text)+'<span>'+String.fromCharCode(65 + answerIndex)+'.</span><span>'+escapeHtml(answer.text)+'</span></button>').join('')+'</div>'+
     '</div>';
   }).join('');
   if(checkBtn) checkBtn.disabled = false;
   if(status) status.textContent = 'Готово: выбери ответы на 25 вопросов.';
+}
+function revealCultureQuestion(card, selectedIndex){
+  const questionIndex = Number(card.dataset.questionIndex);
+  const question = currentQuiz[questionIndex];
+  const correctIndex = question.answers.findIndex(answer => answer.is_correct);
+  const isCorrect = selectedIndex === correctIndex;
+  card.classList.toggle('correct', isCorrect);
+  card.classList.toggle('wrong', !isCorrect);
+  card.querySelectorAll('.quiz-answer').forEach((answerBtn, answerIndex) => {
+    answerBtn.classList.toggle('selected', answerIndex === selectedIndex);
+    answerBtn.classList.toggle('correct', answerIndex === correctIndex);
+    answerBtn.classList.toggle('wrong', answerIndex === selectedIndex && !isCorrect);
+  });
 }
 function checkCultureQuiz(){
   if(!currentQuiz.length) return;
@@ -517,12 +532,7 @@ function checkCultureQuiz(){
     const correctIndex = question.answers.findIndex(answer => answer.is_correct);
     const isCorrect = selectedIndex === correctIndex;
     if(isCorrect) correct++;
-    card.classList.toggle('correct', isCorrect);
-    card.classList.toggle('wrong', !isCorrect);
-    card.querySelectorAll('.quiz-answer').forEach((answerBtn, answerIndex) => {
-      answerBtn.classList.toggle('correct', answerIndex === correctIndex);
-      answerBtn.classList.toggle('wrong', answerIndex === selectedIndex && !isCorrect);
-    });
+    revealCultureQuestion(card, selectedIndex);
   });
   const percent = Math.round(correct / currentQuiz.length * 100);
   document.getElementById('cultureQuizStatus').innerHTML = '<span class="quiz-result">Результат: '+correct+' из '+currentQuiz.length+' ('+percent+'%)</span>';
@@ -563,7 +573,10 @@ function bindEvents(){
     }
     const speakTextBtn = event.target.closest('[data-speak-text]');
     if(speakTextBtn){
+      event.preventDefault();
+      event.stopPropagation();
       speak([speakTextBtn.dataset.speakText], speakTextBtn);
+      return;
     }
     const checkBtn = event.target.closest('[data-check-inputs]');
     if(checkBtn) checkInputs(checkBtn.dataset.checkInputs, checkBtn.dataset.result);
@@ -574,8 +587,7 @@ function bindEvents(){
     const quizAnswer = event.target.closest('.quiz-answer');
     if(quizAnswer && !quizChecked){
       const card = quizAnswer.closest('.quiz-card');
-      card.querySelectorAll('.quiz-answer').forEach(answer => answer.classList.remove('selected'));
-      quizAnswer.classList.add('selected');
+      revealCultureQuestion(card, Number(quizAnswer.dataset.answerIndex));
     }
     if(event.target.id === 'newCultureQuiz') startCultureQuiz();
     if(event.target.id === 'checkCultureQuiz') checkCultureQuiz();
