@@ -63,6 +63,9 @@ th{font-weight:700;background:var(--surface2)}
 .card-word strong{color:var(--text)}
 .card-tip{font-size:.82rem;color:var(--muted);border-top:1px solid var(--border);padding-top:.4rem}
 .speak{align-self:flex-start;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:.85rem;margin-top:.25rem}
+.mini-speak{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:.2rem .55rem;font-size:.82rem;line-height:1.2;white-space:nowrap}
+.mini-speak:hover{background:var(--surface2)}
+.audio-cell{width:1%;text-align:center;white-space:nowrap}
 .alpha-pills{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
 .alpha-pill{padding:.4rem .9rem;border-radius:999px;border:1px solid var(--border);background:var(--surface2);font-family:var(--fdisplay);font-size:1.1rem;transition:background .2s,color .2s,border-color .2s}
 .alpha-pill.active{background:var(--primary);color:var(--text-inv);border-color:transparent}
@@ -246,19 +249,32 @@ function escapeHtml(value){
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 }
 function greek(value){ return '<span class="greek">'+escapeHtml(value)+'</span>'; }
+function speechText(value){
+  return String(value)
+    .split('—')[0]
+    .split('/')[0]
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/\([^)]+\)/g, '')
+    .replace(/[Α-Ω]\s+(?=[α-ωάέήίόύώϊϋΐΰ])/g, '')
+    .trim();
+}
+function audioButton(value, label = '🔊'){
+  return '<button type="button" class="mini-speak" data-speak-text="'+escapeHtml(speechText(value))+'" title="Прослушать">'+label+'</button>';
+}
 function speak(parts, btn){
   if(!('speechSynthesis' in window)){ alert('Синтез речи не поддерживается.'); return; }
+  const originalLabel = btn ? btn.textContent : '';
   if(btn) btn.textContent='⏸ играет';
   const voices = window.speechSynthesis.getVoices();
   const greekVoice = voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith('el')) || null;
   let index = 0;
   function next(){
-    if(index >= parts.length){ if(btn) btn.textContent='▶ Слушать'; return; }
+    if(index >= parts.length){ if(btn) btn.textContent=originalLabel; return; }
     const utterance = new SpeechSynthesisUtterance(parts[index]);
     utterance.lang='el-GR'; utterance.rate=.78; utterance.pitch=1; utterance.volume=1;
     if(greekVoice) utterance.voice = greekVoice;
     utterance.onend = () => setTimeout(next, index === 1 ? 700 : 150);
-    utterance.onerror = () => { if(btn) btn.textContent='▶ Слушать'; };
+    utterance.onerror = () => { if(btn) btn.textContent=originalLabel; };
     index++;
     window.speechSynthesis.speak(utterance);
   }
@@ -292,24 +308,25 @@ function resultId(lessonId, index){ return lessonId+'-result-'+index; }
 function renderTable(section){
   return '<section><h2>'+escapeHtml(section.title)+'</h2><div class="table-wrap"><table><thead><tr>'+
     section.headers.map(header => '<th>'+escapeHtml(header)+'</th>').join('')+
+    '<th class="audio-cell">аудио</th>'+
     '</tr></thead><tbody>'+
-    section.rows.map(row => '<tr>'+row.map(cell => '<td>'+greek(cell)+'</td>').join('')+'</tr>').join('')+
+    section.rows.map(row => '<tr>'+row.map(cell => '<td>'+greek(cell)+'</td>').join('')+'<td class="audio-cell">'+audioButton(row[0])+'</td></tr>').join('')+
     '</tbody></table></div></section>';
 }
 function renderText(section){
   return '<section><div class="panel">'+section.paragraphs.map(paragraph => '<p>'+greek(paragraph)+'</p>').join('')+'</div></section>';
 }
 function renderRead(section){
-  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><div class="choice-bank">'+section.items.map(item => '<span class="badge">'+greek(item)+'</span>').join('')+'</div></div></section>';
+  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><div class="choice-bank">'+section.items.map(item => '<span class="badge">'+greek(item)+audioButton(item)+'</span>').join('')+'</div></div></section>';
 }
 function renderReadWords(section){
-  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><ol class="word-list">'+section.items.map(item => '<li>'+greek(item)+'</li>').join('')+'</ol></div></section>';
+  return '<section><div class="panel"><h3>'+escapeHtml(section.title)+'</h3><ol class="word-list">'+section.items.map(item => '<li>'+greek(item)+' '+audioButton(item)+'</li>').join('')+'</ol></div></section>';
 }
 function renderTwoLists(section){
-  return '<section><h2>'+escapeHtml(section.title)+'</h2><div class="two-col"><div class="panel"><h3>'+escapeHtml(section.leftTitle)+'</h3><ul class="rule-list">'+section.left.map(item => '<li>'+greek(item)+'</li>').join('')+'</ul></div><div class="panel"><h3>'+escapeHtml(section.rightTitle)+'</h3><ul class="rule-list">'+section.right.map(item => '<li>'+greek(item)+'</li>').join('')+'</ul></div></div></section>';
+  return '<section><h2>'+escapeHtml(section.title)+'</h2><div class="two-col"><div class="panel"><h3>'+escapeHtml(section.leftTitle)+'</h3><ul class="rule-list">'+section.left.map(item => '<li>'+greek(item)+' '+audioButton(item)+'</li>').join('')+'</ul></div><div class="panel"><h3>'+escapeHtml(section.rightTitle)+'</h3><ul class="rule-list">'+section.right.map(item => '<li>'+greek(item)+' '+audioButton(item)+'</li>').join('')+'</ul></div></div></section>';
 }
 function renderVocab(section){
-  return '<section><div class="panel"><h2>'+escapeHtml(section.title)+'</h2><div class="table-wrap"><table><tbody>'+section.items.map(row => '<tr><td>'+greek(row[0])+'</td><td>'+escapeHtml(row[1])+'</td></tr>').join('')+'</tbody></table></div></div></section>';
+  return '<section><div class="panel"><h2>'+escapeHtml(section.title)+'</h2><div class="table-wrap"><table><tbody>'+section.items.map(row => '<tr><td>'+greek(row[0])+'</td><td>'+escapeHtml(row[1])+'</td><td class="audio-cell">'+audioButton(row[0])+'</td></tr>').join('')+'</tbody></table></div></div></section>';
 }
 function renderClassify(section, lessonId, index){
   const sid = sectionId(lessonId, index);
@@ -435,6 +452,10 @@ function bindEvents(){
     if(speakBtn){
       const letter = letters[Number(speakBtn.dataset.speakLetter)];
       speak([letter.name, letter.word], speakBtn);
+    }
+    const speakTextBtn = event.target.closest('[data-speak-text]');
+    if(speakTextBtn){
+      speak([speakTextBtn.dataset.speakText], speakTextBtn);
     }
     const checkBtn = event.target.closest('[data-check-inputs]');
     if(checkBtn) checkInputs(checkBtn.dataset.checkInputs, checkBtn.dataset.result);
