@@ -271,6 +271,7 @@ let alphaTimer = null;
 let allQuestions = [];
 let currentQuiz = [];
 let quizChecked = false;
+const cultureCategories = ['История','Религия','Традиции','География','Политика','Ведомства и инфраструктура'];
 
 function escapeHtml(value){
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
@@ -592,7 +593,7 @@ function renderLessons(){
     '</article>').join('')+
     '<article id="culture-tests" class="lesson-page">'+
       '<div class="hero"><span class="pill">случайные 25 вопросов • самопроверка</span><h1>Тесты по культуре</h1><p class="lead">Тренировка по вопросам на знание культуры: приложение выдаёт случайные 25 вопросов, перемешивает ответы и показывает результат.</p></div>'+
-      '<section class="panel"><h2>Тренировка</h2><p class="lead">Нажми «Новый тест» и выбирай ответы: правильный вариант подсветится сразу. Вопросы берутся из файла <code>all_questions.json</code>.</p><div class="quiz-toolbar"><button type="button" class="btn primary" id="newCultureQuiz">🎲 Новый тест на 25 вопросов</button><button type="button" class="btn" id="checkCultureQuiz" disabled>✓ Итог</button><span class="result-text" id="cultureQuizStatus">Загружаю вопросы…</span></div><div id="cultureQuiz" class="quiz-list"></div></section>'+
+      '<section class="panel"><h2>Тренировка</h2><p class="lead">Нажми «Новый тест» или выбери категорию: правильный вариант подсветится сразу. Вопросы берутся из файла <code>all_questions.json</code>.</p><div class="quiz-toolbar"><button type="button" class="btn primary" id="newCultureQuiz">🎲 Новый тест на 25 вопросов</button><select class="btn" id="cultureCategorySelect" aria-label="Категория"></select><button type="button" class="btn primary" id="startCategoryQuiz">Тест по категории</button><button type="button" class="btn" id="checkCultureQuiz" disabled>✓ Итог</button><span class="result-text" id="cultureQuizStatus">Загружаю вопросы…</span></div><div id="cultureQuiz" class="quiz-list"></div></section>'+
     '</article>';
 }
 function renderNav(){
@@ -623,11 +624,23 @@ function shuffle(items){
   }
   return copy;
 }
+function usableQuestions(category = null){
+  return allQuestions.filter(question => !question.image && (!category || question.category === category));
+}
+function renderCultureCategorySelect(){
+  const select = document.getElementById('cultureCategorySelect');
+  if(!select) return;
+  select.innerHTML = cultureCategories.map(category => {
+    const count = usableQuestions(category).length;
+    return '<option value="'+escapeHtml(category)+'">'+escapeHtml(category)+' ('+count+')</option>';
+  }).join('');
+}
 async function loadCultureQuestions(){
   const status = document.getElementById('cultureQuizStatus');
   if(Array.isArray(window.CULTURE_QUESTIONS)){
     allQuestions = window.CULTURE_QUESTIONS;
-    const available = allQuestions.filter(question => !question.image).length;
+    renderCultureCategorySelect();
+    const available = usableQuestions().length;
     if(status) status.textContent = 'Загружено вопросов: '+available+' без картинок';
     startCultureQuiz();
     return;
@@ -636,23 +649,25 @@ async function loadCultureQuestions(){
     const response = await fetch('all_questions.json', {cache:'no-store'});
     if(!response.ok) throw new Error('HTTP '+response.status);
     allQuestions = await response.json();
-    const available = allQuestions.filter(question => !question.image).length;
+    renderCultureCategorySelect();
+    const available = usableQuestions().length;
     if(status) status.textContent = 'Загружено вопросов: '+available+' без картинок';
     startCultureQuiz();
   }catch(error){
     if(status) status.textContent = 'Не удалось загрузить вопросы. Проверь, что рядом с index.html лежит all_questions.js.';
   }
 }
-function startCultureQuiz(){
+function startCultureQuiz(category = null){
   const status = document.getElementById('cultureQuizStatus');
   const checkBtn = document.getElementById('checkCultureQuiz');
-  const questionPool = allQuestions.filter(question => !question.image);
+  const questionPool = usableQuestions(category);
   if(!questionPool.length){
     if(status) status.textContent = 'Вопросы ещё не загружены.';
     return;
   }
   quizChecked = false;
-  currentQuiz = shuffle(questionPool).slice(0, 25).map(question => ({
+  const quizQuestions = category ? shuffle(questionPool) : shuffle(questionPool).slice(0, 25);
+  currentQuiz = quizQuestions.map(question => ({
     ...question,
     answers: shuffle(question.answers || [])
   }));
@@ -670,7 +685,7 @@ function startCultureQuiz(){
     '</div>';
   }).join('');
   if(checkBtn) checkBtn.disabled = false;
-  if(status) status.textContent = 'Готово: выбери ответы на 25 вопросов.';
+  if(status) status.textContent = category ? 'Категория «'+category+'»: '+currentQuiz.length+' вопросов.' : 'Готово: выбери ответы на 25 вопросов.';
 }
 function revealCultureQuestion(card, selectedIndex){
   const questionIndex = Number(card.dataset.questionIndex);
@@ -766,6 +781,10 @@ function bindEvents(){
       revealCultureQuestion(card, Number(quizAnswer.dataset.answerIndex));
     }
     if(event.target.id === 'newCultureQuiz') startCultureQuiz();
+    if(event.target.id === 'startCategoryQuiz'){
+      const select = document.getElementById('cultureCategorySelect');
+      startCultureQuiz(select?.value || cultureCategories[0]);
+    }
     if(event.target.id === 'checkCultureQuiz') checkCultureQuiz();
     const classifyCheck = event.target.closest('[data-check-classify]');
     if(classifyCheck){
