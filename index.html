@@ -137,7 +137,7 @@ const letters = [
   {upper:'Λ',lower:'λ',name:'λάμδα',ipa:'/l/',approx:'[Л]',word:'λεμόνι',translation:'лимон',tip:'Чистый л.'},
   {upper:'Μ',lower:'μ',name:'μι',ipa:'/m/',approx:'[М]',word:'μαμά',translation:'мама',tip:'Обычный м.'},
   {upper:'Ν',lower:'ν',name:'νι',ipa:'/n/',approx:'[Н]',word:'νερό',translation:'вода',tip:'Обычный н.'},
-  {upper:'Ξ',lower:'ξ',name:'ξι',ipa:'/ks/',approx:'[КС]',word:'ξύλο',translation:'дерево',tip:'Сразу к+с.'},
+  {upper:'Ξ',lower:'ξ',name:'ξι',speech:'κσι',ipa:'/ks/',approx:'[КС]',word:'ξύλο',translation:'дерево',tip:'Сразу к+с.'},
   {upper:'Ο',lower:'ο',name:'όμικρον',ipa:'/o/',approx:'[О]',word:'οδός',translation:'улица',tip:'Короткий о.'},
   {upper:'Π',lower:'π',name:'πι',ipa:'/p/',approx:'[П]',word:'παππούς',translation:'дедушка',tip:'Твёрдый п.'},
   {upper:'Ρ',lower:'ρ',name:'ρω',ipa:'/r/',approx:'[Р]',word:'ρόδα',translation:'колесо',tip:'Короткий р.'},
@@ -146,7 +146,7 @@ const letters = [
   {upper:'Υ',lower:'υ',name:'ύψιλον',ipa:'/i/',approx:'[И]',word:'υγεία',translation:'здоровье',tip:'Звучит как и.'},
   {upper:'Φ',lower:'φ',name:'φι',ipa:'/f/',approx:'[Ф]',word:'φίλος',translation:'друг',tip:'Обычный ф.'},
   {upper:'Χ',lower:'χ',name:'χι',ipa:'/x/',approx:'[Х]',word:'χώρα',translation:'страна',tip:'Горловой х.'},
-  {upper:'Ψ',lower:'ψ',name:'ψι',ipa:'/ps/',approx:'[ПС]',word:'ψάρι',translation:'рыба',tip:'Сразу п+с.'},
+  {upper:'Ψ',lower:'ψ',name:'ψι',speech:'πσι',ipa:'/ps/',approx:'[ПС]',word:'ψάρι',translation:'рыба',tip:'Сразу п+с.'},
   {upper:'Ω',lower:'ω',name:'ωμέγα',ipa:'/o/',approx:'[О]',word:'ώρα',translation:'время',tip:'Звучит как о, как ο.'}
 ];
 const alpha = letters.map(letter => letter.lower.split('/')[0]);
@@ -250,6 +250,9 @@ function escapeHtml(value){
 }
 function greek(value){ return '<span class="greek">'+escapeHtml(value)+'</span>'; }
 function speechText(value){
+  const normalized = String(value).trim();
+  if(normalized.startsWith('Ψ ψ') || normalized === 'ψ' || normalized === 'Ψ') return 'πσι';
+  if(normalized.startsWith('Ξ ξ') || normalized === 'ξ' || normalized === 'Ξ') return 'κσι';
   return String(value)
     .split('—')[0]
     .split('/')[0]
@@ -434,7 +437,7 @@ function playFrom(index){
   const status = document.getElementById('alphaStatus');
   if(status) status.textContent = letter.upper+' '+letter.lower+' — '+letter.name;
   highlightPill(index);
-  speak([letter.name], null);
+  speak([letter.speech || letter.name], null);
   alphaTimer = setTimeout(() => playFrom(index + 1), 1250);
 }
 function bindEvents(){
@@ -451,7 +454,7 @@ function bindEvents(){
     const speakBtn = event.target.closest('[data-speak-letter]');
     if(speakBtn){
       const letter = letters[Number(speakBtn.dataset.speakLetter)];
-      speak([letter.name, letter.word], speakBtn);
+      speak([letter.speech || letter.name, letter.word], speakBtn);
     }
     const speakTextBtn = event.target.closest('[data-speak-text]');
     if(speakTextBtn){
