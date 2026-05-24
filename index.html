@@ -139,6 +139,7 @@ footer{padding:2rem 0 3rem;color:var(--muted);font-size:.9rem;border-top:1px sol
   <footer>Открывай на телефоне в течение дня, слушай буквы и проходи упражнения.</footer>
 </div>
 
+<script src="all_questions.js"></script>
 <script>
 const letters = [
   {upper:'Α',lower:'α',name:'άλφα',ipa:'/a/',approx:'[А]',word:'άνθρωπος',translation:'человек',tip:'Открытый звук а.'},
@@ -462,6 +463,13 @@ function shuffle(items){
 }
 async function loadCultureQuestions(){
   const status = document.getElementById('cultureQuizStatus');
+  if(Array.isArray(window.CULTURE_QUESTIONS)){
+    allQuestions = window.CULTURE_QUESTIONS;
+    const available = allQuestions.filter(question => !question.image).length;
+    if(status) status.textContent = 'Загружено вопросов: '+available+' без картинок';
+    startCultureQuiz();
+    return;
+  }
   try{
     const response = await fetch('all_questions.json', {cache:'no-store'});
     if(!response.ok) throw new Error('HTTP '+response.status);
@@ -470,7 +478,7 @@ async function loadCultureQuestions(){
     if(status) status.textContent = 'Загружено вопросов: '+available+' без картинок';
     startCultureQuiz();
   }catch(error){
-    if(status) status.textContent = 'Не удалось загрузить all_questions.json. Открой сайт через GitHub Pages или локальный сервер.';
+    if(status) status.textContent = 'Не удалось загрузить вопросы. Проверь, что рядом с index.html лежит all_questions.js.';
   }
 }
 function startCultureQuiz(){
