@@ -680,7 +680,8 @@ function startCultureQuiz(category = null){
       image+
       '<div class="quiz-answers">'+question.answers.map((answer, answerIndex) => {
         const answerTranslationId = 'answer-translation-'+questionIndex+'-'+answerIndex;
-        return '<div class="quiz-answer" data-answer-index="'+answerIndex+'" role="button" tabindex="0">'+audioButton(answer.text)+'<span>'+String.fromCharCode(65 + answerIndex)+'.</span><span class="quiz-answer-text"><span>'+escapeHtml(answer.text)+'</span><span>'+translationButton(answerTranslationId, 'Перевод')+'</span><span class="quiz-answer-translation" id="'+answerTranslationId+'" hidden>'+escapeHtml(translateAnswer(answer.text))+'</span></span></div>';
+        const answerTranslation = answer.translation || translateAnswer(answer.text);
+        return '<div class="quiz-answer" data-answer-index="'+answerIndex+'" role="button" tabindex="0">'+audioButton(answer.text)+'<span>'+String.fromCharCode(65 + answerIndex)+'.</span><span class="quiz-answer-text"><span>'+escapeHtml(answer.text)+'</span><span>'+translationButton(answerTranslationId, 'Перевод')+'</span><span class="quiz-answer-translation" id="'+answerTranslationId+'" hidden>'+escapeHtml(answerTranslation)+'</span></span></div>';
       }).join('')+'</div>'+
     '</div>';
   }).join('');
