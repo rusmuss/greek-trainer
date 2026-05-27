@@ -271,7 +271,20 @@ let alphaTimer = null;
 let allQuestions = [];
 let currentQuiz = [];
 let quizChecked = false;
-const cultureCategories = ['История','Религия','Традиции','География','Политика','Ведомства и инфраструктура'];
+const cultureCategories = [
+  'История',
+  'Религия',
+  'Традиции 1',
+  'Традиции 2',
+  'Традиции 3',
+  'География 1',
+  'География 2',
+  'География 3',
+  'Политика',
+  'Ведомства и инфраструктура 1',
+  'Ведомства и инфраструктура 2',
+  'Ведомства и инфраструктура 3'
+];
 
 function escapeHtml(value){
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
